@@ -15,8 +15,8 @@
 // user lib
 #include <PtraceUtils.h>
 /**
- * TODO: 熟悉流程
- * TODO: 了解各架构适配情况并适配各架构
+ * TODO: 适配各安卓版本 <-- API
+ * TODO: 了解各架构适配情况并适配各架构 <-- ABI
  */
 
 /**
@@ -29,7 +29,7 @@
  * @param NumParameter NumParameter为参数的个数
  * @return int 返回0表示注入成功，返回-1表示失败
  */
-int inject_remote_process(pid_t pid, char *LibPath, char *FunctionName,char *parameter, long NumParameter){
+int inject_remote_process(pid_t pid, char *LibPath, char *FunctionName){
     int iRet = -1;
     long parameters[6];
     // attach到目标进程
@@ -69,9 +69,12 @@ int inject_remote_process(pid_t pid, char *LibPath, char *FunctionName,char *par
             printf("[-] Call Remote mmap Func Failed, err:%s\n", strerror(errno));
             break;
         }
+
+        // 打印一下
         printf("[+] ptrace_call mmap success, return value=%lX, pc=%lX\n", ptrace_getret(&CurrentRegs), ptrace_getpc(&CurrentRegs));
 
         // 获取mmap函数执行后的返回值，也就是内存映射的起始地址
+        // 从寄存器中获取mmap函数的返回值 即申请的内存首地址
         void *RemoteMapMemoryAddr = (void *)ptrace_getret(&CurrentRegs);
         printf("[+] Remote Process Map Memory Addr:0x%lx\n", (uintptr_t)RemoteMapMemoryAddr);
 
@@ -82,7 +85,16 @@ int inject_remote_process(pid_t pid, char *LibPath, char *FunctionName,char *par
         dlclose_addr = get_dlclose_address(pid);
         dlerror_addr = get_dlerror_address(pid);
 
+        // 打印一下
+        printf("[+] Get imports: dlopen: %x, dlsym: %x, dlclose: %x, dlerror: %x\n", dlopen_addr, dlsym_addr, dlclose_addr, dlerror_addr);
+
+        // 打印注入so的路径
+        printf("[+] LibPath = %s\n", LibPath);
+
         // 将要加载的so库路径写入到远程进程内存空间中
+        /**
+         * pid  开始写入数据的地址   写入内容    写入数据大小
+         */
         if (ptrace_writedata(pid, (uint8_t *) RemoteMapMemoryAddr, (uint8_t *) LibPath,strlen(LibPath) + 1) == -1) {
             printf("[-] Write LibPath:%s to RemoteProcess error\n", LibPath);
             break;
@@ -90,10 +102,10 @@ int inject_remote_process(pid_t pid, char *LibPath, char *FunctionName,char *par
 
         // 设置dlopen的参数,返回值为模块加载的地址
         // void *dlopen(const char *filename, int flag);
-        parameters[0] = (uintptr_t) RemoteMapMemoryAddr;
-        parameters[1] = RTLD_NOW | RTLD_GLOBAL;
+        parameters[0] = (uintptr_t) RemoteMapMemoryAddr; // 写入的libPath
+        parameters[1] = RTLD_NOW | RTLD_GLOBAL; // dlopen的标识
 
-        // 执行dlopen
+        // 执行dlopen 载入so
         if (ptrace_call(pid, (uintptr_t) dlopen_addr, parameters, 2, &CurrentRegs) == -1) {
             printf("[+] Call Remote dlopen Func Failed\n");
             break;
@@ -117,38 +129,40 @@ int inject_remote_process(pid_t pid, char *LibPath, char *FunctionName,char *par
             break;
         }
 
-        // 将so库中需要调用的函数名称写入到远程进程内存空间中
-        if (ptrace_writedata(pid, (uint8_t *) RemoteMapMemoryAddr + strlen(LibPath) + 2,(uint8_t *) FunctionName, strlen(FunctionName) + 1) == -1) {
-            printf("[-] Write FunctionName:%s to RemoteProcess error\n", FunctionName);
-            break;
-        }
+        // 判断是否传入symbols
+        printf("[+] func symbols is %s\n", FunctionName);
+        if (strcmp(FunctionName,"symbols") != 0){
 
-        // 设置dlsym的参数，返回值为远程进程内函数的地址
-        // void *dlsym(void *handle, const char *symbol);
-        parameters[0] = (uintptr_t) RemoteModuleAddr;
-        parameters[1] = (uintptr_t) ((uint8_t *) RemoteMapMemoryAddr + strlen(LibPath) + 2);
-        //调用dlsym
-        if (ptrace_call(pid, (uintptr_t) dlsym_addr, parameters, 2, &CurrentRegs) == -1) {
-            printf("[-] Call Remote dlsym Func Failed\n");
-            break;
-        }
+            // 传入了函数的symbols
+            printf("[+] Have func !!\n");
+            // 将so库中需要调用的函数名称写入到远程进程内存空间中
+            if (ptrace_writedata(pid, (uint8_t *) RemoteMapMemoryAddr + strlen(LibPath) + 2,(uint8_t *) FunctionName, strlen(FunctionName) + 1) == -1) {
+                printf("[-] Write FunctionName:%s to RemoteProcess error\n", FunctionName);
+                break;
+            }
 
-        // RemoteModuleFuncAddr为远程进程空间内获取的函数地址
-        void *RemoteModuleFuncAddr = (void *) ptrace_getret(&CurrentRegs);
-        printf("[+] ptrace_call dlsym success, Remote Process ModuleFunc Addr:0x%lx\n",(uintptr_t) RemoteModuleFuncAddr);
+            // 设置dlsym的参数，返回值为远程进程内函数的地址 调用XXX功能
+            // void *dlsym(void *handle, const char *symbol);
+            parameters[0] = (uintptr_t) RemoteModuleAddr;
+            parameters[1] = (uintptr_t) ((uint8_t *) RemoteMapMemoryAddr + strlen(LibPath) + 2);
+            //调用dlsym
+            if (ptrace_call(pid, (uintptr_t) dlsym_addr, parameters, 2, &CurrentRegs) == -1) {
+                printf("[-] Call Remote dlsym Func Failed\n");
+                break;
+            }
 
-        //为调用的函数参数，拷贝字符串 (这里分配到0x200后面 一般上面的字符串不会超过)
-        if (ptrace_writedata(pid, (uint8_t *) RemoteMapMemoryAddr + strlen(LibPath) + 2 + strlen(parameter) + 2,(uint8_t *) parameter, strlen(parameter) + 1) == -1) {
-            printf("[-] Write param error\n");
-            break;
-        }
-        parameters[0] = (uintptr_t) ((uint8_t *) RemoteMapMemoryAddr + strlen(LibPath) + 2 + strlen(parameter) + 2);
+            // RemoteModuleFuncAddr为远程进程空间内获取的函数地址
+            void *RemoteModuleFuncAddr = (void *) ptrace_getret(&CurrentRegs);
+            printf("[+] ptrace_call dlsym success, Remote Process ModuleFunc Addr:0x%lx\n",(uintptr_t) RemoteModuleFuncAddr);
 
-        //这里其实应该计算参数的大小 然后在分配内存空间
-        //暂时传一个参数吧
-        if (ptrace_call(pid, (uintptr_t) RemoteModuleFuncAddr, parameters, NumParameter,&CurrentRegs) == -1) {
-            printf("[-] Call Remote injected Func Failed\n");
-            break;
+            // 调用远程进程到某功能 不支持参数传递 ！！
+            if (ptrace_call(pid, (uintptr_t) RemoteModuleFuncAddr, parameters, 0,&CurrentRegs) == -1) {
+                printf("[-] Call Remote injected Func Failed\n");
+                break;
+            }
+        } else {
+            // 没有传入函数的symbols
+            printf("[+] No func !!\n");
         }
 
         if (ptrace_setregs(pid, &OriginalRegs) == -1) {
@@ -165,7 +179,6 @@ int inject_remote_process(pid_t pid, char *LibPath, char *FunctionName,char *par
         iRet = 0;
     } while (false);
     
-
     // 解除attach
     ptrace_detach(pid);
     return iRet;
@@ -175,8 +188,8 @@ int inject_remote_process(pid_t pid, char *LibPath, char *FunctionName,char *par
 struct process_inject{
     pid_t pid;
     char lib_path[1024];
-    char *func_name;
-} process_inject = {0, "", ""};
+    char func_symbols[1024];
+} process_inject = {0, "", "symbols"};
 
 /**
  * @brief 参数处理
@@ -194,7 +207,7 @@ void handle_parameter(int argc, char *argv[]){
     int index = 0;
     char *pkg_name = NULL;
     char *lib_path = NULL;
-    char *func_name = NULL;
+    char *func_symbols = NULL;
     bool start_app_flag = false;
 
     while (index < argc){ // 循环判断参数
@@ -235,13 +248,13 @@ void handle_parameter(int argc, char *argv[]){
             lib_path = argv[index]; // so路径
         }
 
-        if (strcmp("-func", argv[index]) == 0){ // 判断是否传入so路径
+        if (strcmp("-symbols", argv[index]) == 0){ // 判断是否传入so路径
             if (index + 1 >= argc){
                 printf("[-] Missing parameter -func\n");
                 exit(-1);
             }
             index++;
-            func_name = argv[index]; // so中的某功能
+            func_symbols = argv[index]; // so中的某功能
         }
 
         index++;
@@ -272,9 +285,9 @@ void handle_parameter(int argc, char *argv[]){
     }
 
     // 处理功能名称
-    if (func_name != NULL){ // 如果有功能名称
-        printf("[+] func_name is %s\n", func_name);
-        strcpy(process_inject.func_name,strdup(func_name)); // 传递功能名称到inject数据结构
+    if (func_symbols != NULL){ // 如果有功能名称
+        printf("[+] symbols is %s\n", func_symbols);
+        strcpy(process_inject.func_symbols,strdup(func_symbols)); // 传递功能名称到inject数据结构
     }
 }
 
@@ -290,5 +303,7 @@ int init_inject(int argc, char *argv[]){
     // 参数处理
     handle_parameter(argc, argv);
 
-    return inject_remote_process(process_inject.pid, process_inject.lib_path, process_inject.func_name, process_inject.lib_path, 1);
+    printf("[+] handle_parameter is OK\n");
+
+    return inject_remote_process(process_inject.pid, process_inject.lib_path, process_inject.func_symbols);
 }

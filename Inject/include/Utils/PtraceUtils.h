@@ -247,7 +247,7 @@ void *get_dlclose_address(pid_t pid) {
     } else {
         dlclose_addr = get_remote_func_addr(pid, libdl_path, (void *) dlclose);
     }
-    printf("dlclose RemoteFuncAddr:0x%lx\n", (uintptr_t) dlclose_addr);
+    printf("[+] dlclose RemoteFuncAddr:0x%lx\n", (uintptr_t) dlclose_addr);
     return dlclose_addr;
 }
 
