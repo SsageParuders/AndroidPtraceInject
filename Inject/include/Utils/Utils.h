@@ -15,53 +15,64 @@
 #include <fcntl.h>
 #include <asm/unistd.h>
 #include <sys/stat.h>
+#include <sys/system_properties.h>
 
-#define MAX_PATH 0x100
+// 系统lib路径
+struct process_libs{
+    const char *libc_path;
+    const char *linker_path;
+    const char *libdl_path;
+} process_libs = {"","",""};
 
-/** 这个没用上 其实可以去掉了 pid寻找放在参数处理里面了
- * @brief 输入进程名 返回进程pid
- * 返回定位到的进程PID，若为-1，表示定位失败
- *
- * @param process_name
- * @return pid_t
+/**
+ * @brief 处理各架构预定义的库文件
  */
-pid_t find_pid_by_name(const char *process_name){
-    int dirid = 0;
-    pid_t pid = -1;
-    FILE *fp = NULL;
-    char filename[MAX_PATH] = {0};
-    char cmdline[MAX_PATH] = {0};
-
-    struct dirent *entry = NULL;
-
-    if (process_name == NULL){
-        return -1;
+__unused __attribute__((constructor)) void handle_libs(){ // __attribute__((constructor))修饰 最先执行
+    char sdk_ver[32];
+    __system_property_get("ro.build.version.sdk", sdk_ver);
+// 系统lib路径
+#if defined(__aarch64__) || defined(__x86_64__)
+    // 在安卓11(包含安卓11)以上 lib路径有所变动
+    if ( atoi(sdk_ver) >=  __ANDROID_API_R__){
+        process_libs.libc_path = "/apex/com.android.runtime/lib64/bionic/libc.so";
+        process_libs.linker_path = "/apex/com.android.runtime/bin/linker64";
+        process_libs.libdl_path = "/apex/com.android.runtime/lib64/bionic/libdl.so";
+    } else {
+        process_libs.libc_path = "/system/lib64/libc.so";
+        process_libs.linker_path = "/system/bin/linker64";
+        process_libs.libdl_path = "/system/lib64/libdl.so";
     }
-
-    DIR *dir = opendir("/proc");
-    if (dir == NULL){
-        return -1;
-    }
-
-    while ((entry = readdir(dir)) != NULL){
-        dirid = atoi(entry->d_name);
-        if (dirid != 0){
-            snprintf(filename, MAX_PATH, "/proc/%d/cmdline", dirid);
-            fp = fopen(filename, "r");
-            if (fp){
-                fgets(cmdline, sizeof(cmdline), fp);
-                fclose(fp);
-                if (strncmp(process_name, cmdline, strlen(process_name)) == 0){
-                    pid = dirid;
-                    break;
-                }
-            }
-        }
-    }
-    closedir(dir);
-    return pid;
+#else
+    process_libs.libc_path = "/system/lib/libc.so";
+    process_libs.linker_path = "/system/bin/linker";
+    process_libs.libdl_path = "/system/lib/libdl.so";
+#endif
+    printf("[+] libc_path is %s\n", process_libs.libc_path);
+    printf("[+] linker_path is %s\n", process_libs.linker_path);
+    printf("[+] libdl_path is %s\n", process_libs.libdl_path);
+    printf("[+] system libs is OK\n");
 }
 
+/**
+ * @brief 执行shell并且返回shell执行内容
+ * @param cmd 执行到shel内容
+ * @param result shell到返回结果
+ * @return 是否执行成功
+ */
+int exec_cmd(const char *cmd, char *result){
+    FILE *pipe = popen(cmd, "r");
+    if(!pipe){
+        return 0;
+    }
+    char buffer[128] = {0};
+    while(!feof(pipe)){
+        if(fgets(buffer, 128, pipe)){
+            strcat(result, buffer);
+        }
+    }
+    pclose(pipe);
+    return 1;
+}
 
 /**
  * @brief Get the pid by pkg_name
@@ -111,7 +122,6 @@ bool get_pid_by_name(pid_t *pid, char *task_name){
 
     return false;
 }
-
 
 /**
  * @brief Get the app start activity object 

@@ -1,0 +1,46 @@
+[+] libc_path is /apex/com.android.runtime/lib64/bionic/libc.so
+[+] linker_path is /apex/com.android.runtime/bin/linker64
+[+] libdl_path is /apex/com.android.runtime/lib64/bionic/libdl.so
+[+] system libs is OK
+[+] Start Inject
+[+] app_start_activity is bin.mt.plus/.Main
+[+] am start bin.mt.plus/.Main
+Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] cmp=bin.mt.plus/.Main }
+[+] pkg_name is bin.mt.plus
+[+] get_pid_by_name pid is 21968
+[+] lib_path is /data/local/tmp/libHook.so
+[+] symbols is hello
+[+] handle_parameter is OK
+[+] SELinux is Permissive
+[+] handle_selinux is OK
+[+] attach porcess success, pid:21968
+[+] [get_remote_func_addr] lmod=0x702E6D0000, rmod=0x7AFF5D0000, lfunc=0x702E7A6F30, rfunc=0x7AFF6A6F30
+[+] mmap RemoteFuncAddr:0x7aff6a6f30
+[+] ptrace continue process success, pid:21968
+[+] ptrace call ret status is 2943
+[+] ptrace_call mmap success, return value=7A6A246000, pc=7AFF5D0000
+[+] Remote Process Map Memory Addr:0x7a6a246000
+[+] linker_path value:/apex/com.android.runtime/bin/linker64
+[+] [get_remote_func_addr] lmod=0x702E6BB000, rmod=0x7AFEA1A000, lfunc=0x702E6BC014, rfunc=0x7AFEA1B014
+[+] dlopen RemoteFuncAddr:0x7afea1b014
+[+] [get_remote_func_addr] lmod=0x702E6BB000, rmod=0x7AFEA1A000, lfunc=0x702E6BC040, rfunc=0x7AFEA1B040
+[+] dlsym RemoteFuncAddr:0x7afea1b040
+[+] [get_remote_func_addr] lmod=0x702E6BB000, rmod=0x7AFEA1A000, lfunc=0x702E6BC084, rfunc=0x7AFEA1B084
+[+] dlclose RemoteFuncAddr:0x7afea1b084
+[+] [get_remote_func_addr] lmod=0x702E6BB000, rmod=0x7AFEA1A000, lfunc=0x702E6BC02C, rfunc=0x7AFEA1B02C
+[+] dlerror RemoteFuncAddr:0x7afea1b02c
+[+] Get imports: dlopen: fea1b014, dlsym: fea1b040, dlclose: fea1b084, dlerror: fea1b02c
+[+] LibPath = /data/local/tmp/libHook.so
+[+] ptrace continue process success, pid:21968
+[+] ptrace call ret status is 2943
+[+] ptrace_call dlopen success, Remote Process load module Addr:0x1577767b54bbbe6f
+[+] func symbols is hello
+[+] Have func !!
+[+] ptrace continue process success, pid:21968
+[+] ptrace call ret status is 2943
+[+] ptrace_call dlsym success, Remote Process ModuleFunc Addr:0x7a0d7e0748
+[+] ptrace continue process success, pid:21968
+[+] ptrace call ret status is 2943
+[+] Recover Regs Success
+[+] detach process success, pid:21968
+[+] Finish Inject

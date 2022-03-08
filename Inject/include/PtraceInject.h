@@ -16,6 +16,8 @@
 #include <PtraceUtils.h>
 /**
  * TODO: 适配各安卓版本 <-- API
+ */
+/**
  * TODO: 了解各架构适配情况并适配各架构 <-- ABI
  */
 
@@ -29,7 +31,7 @@
  * @param NumParameter NumParameter为参数的个数
  * @return int 返回0表示注入成功，返回-1表示失败
  */
-int inject_remote_process(pid_t pid, char *LibPath, char *FunctionName){
+int inject_remote_process(pid_t pid, char *LibPath, char *FunctionName, char *FlagSELinux){
     int iRet = -1;
     long parameters[6];
     // attach到目标进程
@@ -181,6 +183,14 @@ int inject_remote_process(pid_t pid, char *LibPath, char *FunctionName){
     
     // 解除attach
     ptrace_detach(pid);
+
+    // 如果原SELinux状态为严格 则恢复状态
+    if (strcmp(FlagSELinux,"Enforcing") == 0){
+        if (system("setenforce 1") == 0){
+            printf("[+] SELinux has been rec\n");
+        }
+    }
+
     return iRet;
 }
 
@@ -189,7 +199,8 @@ struct process_inject{
     pid_t pid;
     char lib_path[1024];
     char func_symbols[1024];
-} process_inject = {0, "", "symbols"};
+    char orig_selinux[1024];
+} process_inject = {0, "", "symbols", "Permissive"};
 
 /**
  * @brief 参数处理
@@ -292,6 +303,26 @@ void handle_parameter(int argc, char *argv[]){
 }
 
 /**
+ * 判断SELinux状态 并设置SELinux为Permissive宽容模式
+ */
+void handle_selinux(){
+    char ret[1024];
+    exec_cmd("getenforce",ret); // Inject以su身份执行 无需 su -c
+    if (strcmp(ret,"Permissive\n") == 0){// 原SELinux是Permissive宽容模式 <-- 0
+        printf("[+] SELinux is Permissive\n");
+        strcpy(process_inject.orig_selinux, strdup("Permissive"));// 设置flag
+    } else if (strcmp(ret,"Enforcing\n") == 0){// 原来的SELinux是Enforcing严格模式 <-- 1
+        printf("[-] SELinux is Enforcing\n");
+        strcpy(process_inject.orig_selinux, strdup("Enforcing"));
+        if (system("setenforce 0") == 0){
+            printf("[+] Selinux has been changed to Permissive\n");
+        }
+    } else {
+        printf("[+] SELinux is Disabled or ??\n");
+    }
+}
+
+/**
  * @brief 初始化Inject
  * 
  * @param argc 
@@ -305,5 +336,9 @@ int init_inject(int argc, char *argv[]){
 
     printf("[+] handle_parameter is OK\n");
 
-    return inject_remote_process(process_inject.pid, process_inject.lib_path, process_inject.func_symbols);
+    handle_selinux();
+
+    printf("[+] handle_selinux is OK\n");
+
+    return inject_remote_process(process_inject.pid, process_inject.lib_path, process_inject.func_symbols,process_inject.orig_selinux);
 }

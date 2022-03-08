@@ -2,9 +2,18 @@
 
 ## How to build
 
+- Make sure you have `CMake` and `Ninja` in your PATH
+
+- Edit CMakeLists.txt. Set `ANDROID_NDK` and `CMAKE_TOOLCHAIN_FILE` for yourself.
+
+- If your OS is Windows, read `build.sh` and make it to be a `build.bat`.
+
+  Don't forget to change `CMAKE_RUNTIME_OUTPUT_DIRECTORY` and `CMAKE_LIBRARY_OUTPUT_DIRECTORY` in Windows styles.
+
 ```shell
-git clone XXXXXXX
-cd XXXX
+git clone https://github.com/SsageParuders/AndroidPtraceInject.git
+cd AndroidPtraceInject
+mkdir build
 chmod +x build.sh
 ./build.sh
 ```
@@ -12,8 +21,8 @@ chmod +x build.sh
 ## How to use
 
 ```shell
-#以下是Inject命令行工具的参数:
-#   部分参数选填
+# Here are the parameters of the Inject command line tool:
+#   Some parameters are optional.
 #   -p 目标进程pid <-- 不传pid就传包名
 #   -n 目标App包名 <-- 不传包名就传pid
 #   -f 是否开启App <-- 看你要不要强制唤醒App
@@ -29,9 +38,11 @@ cd /data/local/tmp && ./Inject -f -n bin.mt.plus -so /data/local/tmp/libHook.so 
 
 ## Finished
 
+- [x] First Inject
+
 - [x] handle_parameter
 
-- [x] First Inject
+- [x] handle_selinux
 
 ## Future
 
@@ -44,7 +55,4 @@ cd /data/local/tmp && ./Inject -f -n bin.mt.plus -so /data/local/tmp/libHook.so 
 [SharkInject](https://github.com/bigGreenPeople/SharkInject) By bigGreenPeople
 
 [androidinject](https://github.com/mergerly/androidinject) By mergerly
-
-
-
 

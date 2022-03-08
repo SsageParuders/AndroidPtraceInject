@@ -1,0 +1,45 @@
+[+] Start Inject
+[+] app_start_activity is bin.mt.plus/.Main
+[+] am start bin.mt.plus/.Main
+Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] cmp=bin.mt.plus/.Main }
+[+] pkg_name is bin.mt.plus
+[+] get_pid_by_name pid is 25990
+[+] lib_path is /data/local/tmp/libHook.so
+[+] symbols is hello
+[+] handle_parameter is OK
+[+] The state of the SELinux is Enforcing
+[-] SELinux is Enforcing
+[+] Selinux has been changed to Permissive
+[+] handle_selinux is OK
+[+] attach porcess success, pid:25990
+[+] [get_remote_func_addr] lmod=0x7E76D0C000, rmod=0x6FCB8D7000, lfunc=0x7E76D87428, rfunc=0x6FCB952428
+[+] mmap RemoteFuncAddr:0x6fcb952428
+[+] ptrace continue process success, pid:25990
+[+] ptrace call ret status is 1151
+[+] ptrace_call mmap success, return value=6FCB33D000, pc=6FCB8D7000
+[+] Remote Process Map Memory Addr:0x6fcb33d000
+[+] linker_path value:/system/bin/linker64
+[+] [get_remote_func_addr] lmod=0x7E76CCB000, rmod=0x6FCC080000, lfunc=0x7E76CCBEF8, rfunc=0x6FCC080EF8
+[+] dlopen RemoteFuncAddr:0x6fcc080ef8
+[+] [get_remote_func_addr] lmod=0x7E76CCB000, rmod=0x6FCC080000, lfunc=0x7E76CCBF24, rfunc=0x6FCC080F24
+[+] dlsym RemoteFuncAddr:0x6fcc080f24
+[+] [get_remote_func_addr] lmod=0x7E76CCB000, rmod=0x6FCC080000, lfunc=0x7E76CCBF68, rfunc=0x6FCC080F68
+[+] dlclose RemoteFuncAddr:0x6fcc080f68
+[+] [get_remote_func_addr] lmod=0x7E76CCB000, rmod=0x6FCC080000, lfunc=0x7E76CCBF10, rfunc=0x6FCC080F10
+[+] dlerror RemoteFuncAddr:0x6fcc080f10
+[+] Get imports: dlopen: cc080ef8, dlsym: cc080f24, dlclose: cc080f68, dlerror: cc080f10
+[+] LibPath = /data/local/tmp/libHook.so
+[+] ptrace continue process success, pid:25990
+[+] ptrace call ret status is 1151
+[+] ptrace_call dlopen success, Remote Process load module Addr:0x4d53e2726eff68e5
+[+] func symbols is hello
+[+] Have func !!
+[+] ptrace continue process success, pid:25990
+[+] ptrace call ret status is 1151
+[+] ptrace_call dlsym success, Remote Process ModuleFunc Addr:0x6f2a8b5748
+[+] ptrace continue process success, pid:25990
+[+] ptrace call ret status is 1151
+[+] Recover Regs Success
+[+] detach process success, pid:25990
+[+] SELinux has been rec
+[+] Finish Inject

@@ -20,20 +20,6 @@
 // user lib
 #include <Utils.h>
 
-// 系统lib路径
-#if defined(__aarch64__) || defined(__x86_64__)
-const char *libc_path = "/system/lib64/libc.so";
-const char *linker_path = "/system/bin/linker64";
-const char *libdl_path = "/system/lib64/libdl.so";
-#else
-const char *libc_path = "/system/lib/libc.so";
-const char *linker_path = "/system/bin/linker";
-const char *libdl_path = "/system/lib/libdl.so";
-#endif
-
-// 其余预定义
-#define CPSR_T_MASK (1u << 5)
-
 // 各构架预定义
 #if defined(__aarch64__) // 真机64位
 #define pt_regs user_pt_regs
@@ -55,6 +41,9 @@ const char *libdl_path = "/system/lib/libdl.so";
 #elif defined(__i386__) // 模拟器
 #define pt_regs user_regs_struct
 #endif
+
+// 其余预定义
+#define CPSR_T_MASK (1u << 5)
 
 /** ============== 分界线 ==============
  */
@@ -207,7 +196,7 @@ long ptrace_getpc(struct pt_regs *regs) {
  * @return void* mmap函数在远程进程中的地址
  */
 void *get_mmap_address(pid_t pid){
-    return get_remote_func_addr(pid, libc_path, (void *)mmap);
+    return get_remote_func_addr(pid, process_libs.libc_path, (void *)mmap);
 }
 
 /**
@@ -221,13 +210,13 @@ void *get_dlopen_address(pid_t pid) {
     memset(sdk_ver, 0, sizeof(sdk_ver));
     __system_property_get("ro.build.version.sdk", sdk_ver);
 
-    printf("linker_path value:%s\n",linker_path);
+    printf("[+] linker_path value:%s\n",process_libs.linker_path);
     if (atoi(sdk_ver) <= 23) { // 安卓7
-        dlopen_addr = get_remote_func_addr(pid, linker_path, (void *) dlopen);
+        dlopen_addr = get_remote_func_addr(pid, process_libs.linker_path, (void *) dlopen);
     } else {
-        dlopen_addr = get_remote_func_addr(pid, libdl_path, (void *) dlopen);
+        dlopen_addr = get_remote_func_addr(pid, process_libs.libdl_path, (void *) dlopen);
     }
-    printf("dlopen RemoteFuncAddr:0x%lx\n", (uintptr_t) dlopen_addr);
+    printf("[+] dlopen RemoteFuncAddr:0x%lx\n", (uintptr_t) dlopen_addr);
     return dlopen_addr;
 }
 
@@ -243,9 +232,9 @@ void *get_dlclose_address(pid_t pid) {
     __system_property_get("ro.build.version.sdk", sdk_ver);
 
     if (atoi(sdk_ver) <= 23) {
-        dlclose_addr = get_remote_func_addr(pid, linker_path, (void *) dlclose);
+        dlclose_addr = get_remote_func_addr(pid, process_libs.linker_path, (void *) dlclose);
     } else {
-        dlclose_addr = get_remote_func_addr(pid, libdl_path, (void *) dlclose);
+        dlclose_addr = get_remote_func_addr(pid, process_libs.libdl_path, (void *) dlclose);
     }
     printf("[+] dlclose RemoteFuncAddr:0x%lx\n", (uintptr_t) dlclose_addr);
     return dlclose_addr;
@@ -263,11 +252,11 @@ void *get_dlsym_address(pid_t pid) {
     __system_property_get("ro.build.version.sdk", sdk_ver);
 
     if (atoi(sdk_ver) <= 23) {
-        dlsym_addr = get_remote_func_addr(pid, linker_path, (void *) dlsym);
+        dlsym_addr = get_remote_func_addr(pid, process_libs.linker_path, (void *) dlsym);
     } else {
-        dlsym_addr = get_remote_func_addr(pid, libdl_path, (void *) dlsym);
+        dlsym_addr = get_remote_func_addr(pid, process_libs.libdl_path, (void *) dlsym);
     }
-    printf("dlsym RemoteFuncAddr:0x%lx\n", (uintptr_t) dlsym_addr);
+    printf("[+] dlsym RemoteFuncAddr:0x%lx\n", (uintptr_t) dlsym_addr);
     return dlsym_addr;
 }
 
@@ -283,11 +272,11 @@ void *get_dlerror_address(pid_t pid) {
     __system_property_get("ro.build.version.sdk", sdk_ver);
 
     if (atoi(sdk_ver) <= 23) {
-        dlerror_addr = get_remote_func_addr(pid, linker_path, (void *) dlerror);
+        dlerror_addr = get_remote_func_addr(pid, process_libs.linker_path, (void *) dlerror);
     } else {
-        dlerror_addr = get_remote_func_addr(pid, libdl_path, (void *) dlerror);
+        dlerror_addr = get_remote_func_addr(pid, process_libs.libdl_path, (void *) dlerror);
     }
-    printf("dlerror RemoteFuncAddr:0x%lx\n", (uintptr_t) dlerror_addr);
+    printf("[+] dlerror RemoteFuncAddr:0x%lx\n", (uintptr_t) dlerror_addr);
     return dlerror_addr;
 }
 
@@ -520,7 +509,7 @@ int ptrace_call(pid_t pid, uintptr_t ExecuteAddr, long *parameters, long num_par
     } else { // Android 7.0
         static long start_ptr = 0;
         if (start_ptr == 0){
-            start_ptr = (long)get_module_base_addr(pid, libc_path);
+            start_ptr = (long)get_module_base_addr(pid, process_libs.libc_path);
         }
         lr_val = start_ptr;
     }

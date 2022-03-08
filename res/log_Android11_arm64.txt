@@ -1,0 +1,44 @@
+[+] Start Inject
+[+] app_start_activity is bin.mt.plus/.Main
+[+] am start bin.mt.plus/.Main
+Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] cmp=bin.mt.plus/.Main }
+[+] pkg_name is bin.mt.plus
+[+] get_pid_by_name pid is 23218
+[+] lib_path is /data/local/tmp/libHook.so
+[+] symbols is hello
+[+] handle_parameter is OK
+[+] The state of the SELinux is Permissive
+[+] SELinux is Permissive
+[+] handle_selinux is OK
+/*
+到这里说明
+启动App --> 参数处理 --> SELinux状态处理没问题
+*/
+[+] attach porcess success, pid:23218
+/*
+附加没问题
+*/
+[+] [get_remote_func_addr] lmod=0x0, rmod=0x0, lfunc=0x7291E6EF30, rfunc=0x7291E6EF30
+/*
+这获取远程地址有问题 得看看
+*/
+[+] mmap RemoteFuncAddr:0x7291e6ef30
+[+] ptrace continue process success, pid:23218
+[+] ptrace call ret status is 2943
+[+] ptrace_call mmap success, return value=0, pc=7291E6EF30
+[+] Remote Process Map Memory Addr:0x0
+[+] linker_path value:/system/bin/linker64
+[+] [get_remote_func_addr] lmod=0x0, rmod=0x0, lfunc=0x7291D4E014, rfunc=0x7291D4E014
+[+] dlopen RemoteFuncAddr:0x7291d4e014
+[+] [get_remote_func_addr] lmod=0x0, rmod=0x0, lfunc=0x7291D4E040, rfunc=0x7291D4E040
+[+] dlsym RemoteFuncAddr:0x7291d4e040
+[+] [get_remote_func_addr] lmod=0x0, rmod=0x0, lfunc=0x7291D4E084, rfunc=0x7291D4E084
+[+] dlclose RemoteFuncAddr:0x7291d4e084
+[+] [get_remote_func_addr] lmod=0x0, rmod=0x0, lfunc=0x7291D4E02C, rfunc=0x7291D4E02C
+[+] dlerror RemoteFuncAddr:0x7291d4e02c
+[+] Get imports: dlopen: 91d4e014, dlsym: 91d4e040, dlclose: 91d4e084, dlerror: 91d4e02c
+[+] LibPath = /data/local/tmp/libHook.so
+[-] Write Remote Memory error, MemoryAddr:0x0, err:I/O error
+[-] Write LibPath:/data/local/tmp/libHook.so to RemoteProcess error
+[+] detach process success, pid:23218
+[-] Inject Erro
