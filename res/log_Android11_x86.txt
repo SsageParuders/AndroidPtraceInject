@@ -1,0 +1,48 @@
+[+] libc_path is /apex/com.android.runtime/lib/bionic/libc.so
+[+] linker_path is /apex/com.android.runtime/bin/linker
+[+] libdl_path is /apex/com.android.runtime/lib/bionic/libdl.so
+[+] system libs is OK
+[+] handle_selinux_init is OK
+[+] Start Inject
+[+] app_start_activity is bin.mt.plus/.Main
+[+] am start bin.mt.plus/.Main
+Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] cmp=bin.mt.plus/.Main }
+[+] pkg_name is bin.mt.plus
+[+] get_pid_by_name pid is 12332
+[+] lib_path is /data/local/tmp/libHook.so
+[+] symbols is hello
+[+] handle_parameter is OK
+[-] SELinux is Enforcing
+[+] Selinux has been changed to Permissive
+[+] attach porcess success, pid:12332
+[+] [get_remote_func_addr] lmod=0xEA0EF000, rmod=0xF33D7000, lfunc=0xEA17D1D0, rfunc=0xF34651D0
+[+] mmap RemoteFuncAddr:0xf34651d0
+[+] ptrace continue process success, pid:12332
+ptrace call ret status is 2943
+[+] ptrace_call mmap success, return value=E657A000, pc=0
+[+] Remote Process Map Memory Addr:0xe657a000
+[+] linker_path value:/apex/com.android.runtime/bin/linker
+[+] [get_remote_func_addr] lmod=0xEA099000, rmod=0xF1661000, lfunc=0xEA09AA50, rfunc=0xF1662A50
+[+] dlopen RemoteFuncAddr:0xf1662a50
+[+] [get_remote_func_addr] lmod=0xEA099000, rmod=0xF1661000, lfunc=0xEA09AAB0, rfunc=0xF1662AB0
+[+] dlsym RemoteFuncAddr:0xf1662ab0
+[+] [get_remote_func_addr] lmod=0xEA099000, rmod=0xF1661000, lfunc=0xEA09AB40, rfunc=0xF1662B40
+[+] dlclose RemoteFuncAddr:0xf1662b40
+[+] [get_remote_func_addr] lmod=0xEA099000, rmod=0xF1661000, lfunc=0xEA09AA80, rfunc=0xF1662A80
+[+] dlerror RemoteFuncAddr:0xf1662a80
+[+] Get imports: dlopen: f1662a50, dlsym: f1662ab0, dlclose: f1662b40, dlerror: f1662a80
+[+] LibPath = /data/local/tmp/libHook.so
+[+] ptrace continue process success, pid:12332
+[+] ptrace call ret status is 2943
+[+] ptrace_call dlopen success, Remote Process load module Addr:0xcbd0795b
+[+] func symbols is hello
+[+] Have func !!
+[+] ptrace continue process success, pid:12332
+[+] ptrace call ret status is 2943
+[+] ptrace_call dlsym success, Remote Process ModuleFunc Addr:0xc421d5c0
+[+] ptrace continue process success, pid:12332
+[+] ptrace call ret status is 2943
+[+] Recover Regs Success
+[+] detach process success, pid:12332
+[+] SELinux has been rec
+[+] Finish Inject

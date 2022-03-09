@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <asm/unistd.h>
 #include <sys/stat.h>
+#include <sys/vfs.h>
 #include <sys/system_properties.h>
 
 // 系统lib路径
@@ -24,16 +25,22 @@ struct process_libs{
     const char *libdl_path;
 } process_libs = {"","",""};
 
+// selinux状态
+struct process_selinux{
+    const char *selinux_mnt;
+    int enforce;
+} process_selinux = {nullptr, -1};
+
 /**
  * @brief 处理各架构预定义的库文件
  */
-__unused __attribute__((constructor)) void handle_libs(){ // __attribute__((constructor))修饰 最先执行
+__unused __attribute__((constructor(101))) void handle_libs(){ // __attribute__((constructor))修饰 最先执行
     char sdk_ver[32];
     __system_property_get("ro.build.version.sdk", sdk_ver);
 // 系统lib路径
 #if defined(__aarch64__) || defined(__x86_64__)
-    // 在安卓11(包含安卓11)以上 lib路径有所变动
-    if ( atoi(sdk_ver) >=  __ANDROID_API_R__){
+    // 在安卓10(包含安卓10)以上 lib路径有所变动
+    if ( atoi(sdk_ver) >=  __ANDROID_API_Q__){
         process_libs.libc_path = "/apex/com.android.runtime/lib64/bionic/libc.so";
         process_libs.linker_path = "/apex/com.android.runtime/bin/linker64";
         process_libs.libdl_path = "/apex/com.android.runtime/lib64/bionic/libdl.so";
@@ -43,9 +50,16 @@ __unused __attribute__((constructor)) void handle_libs(){ // __attribute__((cons
         process_libs.libdl_path = "/system/lib64/libdl.so";
     }
 #else
-    process_libs.libc_path = "/system/lib/libc.so";
-    process_libs.linker_path = "/system/bin/linker";
-    process_libs.libdl_path = "/system/lib/libdl.so";
+    // 在安卓10(包含安卓10)以上 lib路径有所变动
+    if (atoi(sdk_ver) >=  __ANDROID_API_Q__){
+        process_libs.libc_path = "/apex/com.android.runtime/lib/bionic/libc.so";
+        process_libs.linker_path = "/apex/com.android.runtime/bin/linker";
+        process_libs.libdl_path = "/apex/com.android.runtime/lib/bionic/libdl.so";
+    } else {
+        process_libs.libc_path = "/system/lib/libc.so";
+        process_libs.linker_path = "/system/bin/linker";
+        process_libs.libdl_path = "/system/lib/libdl.so";
+    }
 #endif
     printf("[+] libc_path is %s\n", process_libs.libc_path);
     printf("[+] linker_path is %s\n", process_libs.linker_path);
@@ -54,24 +68,155 @@ __unused __attribute__((constructor)) void handle_libs(){ // __attribute__((cons
 }
 
 /**
- * @brief 执行shell并且返回shell执行内容
- * @param cmd 执行到shel内容
- * @param result shell到返回结果
- * @return 是否执行成功
+ * @brief 处理各SELinux判断的初始化
  */
-int exec_cmd(const char *cmd, char *result){
-    FILE *pipe = popen(cmd, "r");
-    if(!pipe){
-        return 0;
+__unused __attribute__((constructor(102))) void handle_selinux_init(){ // 执行优先级 102 切记执行优先级越低 越先执行
+    // code from AOSP
+    char buf[BUFSIZ], *p;
+    FILE *fp = nullptr;
+    struct statfs sfbuf;
+    int rc;
+    char *bufp;
+    int exists = 0;
+
+    if (process_selinux.selinux_mnt){ // 如果selinux_state有值了 就终止下面的行为
+        return;
     }
-    char buffer[128] = {0};
-    while(!feof(pipe)){
-        if(fgets(buffer, 128, pipe)){
-            strcat(result, buffer);
+
+    /* We check to see if the preferred mount point for selinux file
+	 * system has a selinuxfs. */
+    do {
+        rc = statfs("/sys/fs/selinux", &sfbuf);
+    } while (rc < 0 && errno == EINTR);
+    if (rc == 0) {
+        if ((uint32_t)sfbuf.f_type == (uint32_t)SELINUX_MAGIC) {
+            process_selinux.selinux_mnt = strdup("/sys/fs/selinux"); // 为 selinux_mnt 赋值
+            return;
         }
     }
-    pclose(pipe);
-    return 1;
+
+    /* Drop back to detecting it the long way. */
+    fp = fopen("/proc/filesystems", "r");
+    if (!fp){
+        return;
+    }
+
+    while ((bufp = fgets(buf, sizeof buf - 1, fp)) != nullptr) {
+        if (strstr(buf, "selinuxfs")) {
+            exists = 1;
+            break;
+        }
+    }
+
+    if (!exists){
+        goto out;
+    }
+
+    fclose(fp);
+
+    /* At this point, the usual spot doesn't have an selinuxfs so
+	 * we look around for it */
+    fp = fopen("/proc/mounts", "r");
+    if (!fp){
+        goto out;
+    }
+
+    while ((bufp = fgets(buf, sizeof buf - 1, fp)) != nullptr) {
+        char *tmp;
+        p = strchr(buf, ' ');
+        if (!p){
+            goto out;
+        }
+        p++;
+        tmp = strchr(p, ' ');
+        if (!tmp){
+            goto out;
+        }
+        if (!strncmp(tmp + 1, "selinuxfs ", 10)) {
+            *tmp = '\0';
+            break;
+        }
+    }
+
+    /* If we found something, dup it */
+    if (bufp){
+        process_selinux.selinux_mnt = strdup(p);
+    }
+
+    out:
+    if (fp){
+        fclose(fp);
+    }
+
+    return;
+}
+
+/**
+ * @brief 检测SELinux是否为宽容模式 如果不是 则设置为宽容模式
+ */
+__unused __attribute__((constructor(103))) void handle_selinux_detect() {
+    // code from AOSP
+    int fd, ret;
+    char path[PATH_MAX];
+    char buf[20];
+
+    if (!process_selinux.selinux_mnt) { // selinux_mnt不为空
+        errno = ENOENT;
+        printf("[-] selinux_mnt is nullptr\n");
+        return ;
+    }
+
+    snprintf(path, sizeof path, "%s/enforce", process_selinux.selinux_mnt);
+    fd = open(path, O_RDONLY);
+    if (fd < 0){ // 如果打开文件失败 那么终止
+        printf("[-] Failed to open enforce\n");
+        return ;
+    }
+
+    memset(buf, 0, sizeof buf);
+    ret = read(fd, buf, sizeof buf - 1);
+    close(fd);
+    if (ret < 0){ // 如果值小于0 那么返回
+        printf("[-] SELinux ret error\n");
+        return ;
+    }
+
+    // 将buf写入到enforce
+    if (sscanf(buf, "%d", (int*)&process_selinux.enforce) != 1){ // 如果失败 则终止
+        printf("[-] sscanf error\n");
+        return ;
+    }
+    printf("[+] handle_selinux_init is OK\n");
+    return ;
+}
+
+/**
+ *
+ * @param value SELinux的状态值 0为宽容模式Permissive 1为严格模式Enforcing
+ * @return
+ */
+bool set_selinux_state(int value) {
+    bool succ = true;
+    int fd;
+    char path[PATH_MAX];
+    char buf[20];
+
+    if (!process_selinux.selinux_mnt) {
+        errno = ENOENT;
+        return -1;
+    }
+
+    snprintf(path, sizeof path, "%s/enforce", process_selinux.selinux_mnt);
+    fd = open(path, O_RDWR);
+    if (fd < 0)
+        return -1;
+
+    snprintf(buf, sizeof buf, "%d", (int)value);
+    int ret = write(fd, buf, strlen(buf));
+    close(fd);
+    if (ret < 0)
+        succ = false;
+    return succ;
 }
 
 /**

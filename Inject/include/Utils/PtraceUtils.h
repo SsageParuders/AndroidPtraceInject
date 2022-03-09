@@ -397,7 +397,7 @@ int ptrace_call(pid_t pid, uintptr_t ExecuteAddr, long *parameters, long num_par
     waitpid(pid, &stat, WUNTRACED);
 
     // 判断是否成功执行函数
-    printf("ptrace call ret status is %d\n", stat);
+    printf("[+] ptrace call ret status is %d\n", stat);
     while (stat != 0xb7f){
         if (ptrace_continue(pid) == -1){
             printf("[-] ptrace call error");

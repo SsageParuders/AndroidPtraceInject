@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.2.2) # 最低CMake版本要求
 set(CMAKE_SYSTEM_NAME ANDROID) # 设置目标编译平台参数 Android
 set(CMAKE_SYSTEM_VERSION 28) # 系统版本
 set(ANDROID_PLATFORM 28) # 平台版本
-set(ANDROID_ABI arm64-v8a) # 设置目标构架 armeabi-v7a arm64-v8a x86
+set(ANDROID_ABI arm64-v8a) # 设置目标构架 armeabi-v7a arm64-v8a x86 x86_64
 ##
 ## 由于ANDROID_ABI一次编译只能设置一种架构
 ## 因此该参数在build.sh脚本中单独设置 并且每种架构编译一次
