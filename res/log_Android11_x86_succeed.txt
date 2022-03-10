@@ -18,7 +18,7 @@ Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.L
 [+] [get_remote_func_addr] lmod=0xEA0EF000, rmod=0xF33D7000, lfunc=0xEA17D1D0, rfunc=0xF34651D0
 [+] mmap RemoteFuncAddr:0xf34651d0
 [+] ptrace continue process success, pid:12332
-ptrace call ret status is 2943
+[+] ptrace call ret status is 2943
 [+] ptrace_call mmap success, return value=E657A000, pc=0
 [+] Remote Process Map Memory Addr:0xe657a000
 [+] linker_path value:/apex/com.android.runtime/bin/linker

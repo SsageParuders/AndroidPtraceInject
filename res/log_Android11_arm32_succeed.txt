@@ -1,0 +1,42 @@
+/*
+安卓11居然是正常的 什么鬼
+*/
+[+] libc_path is /apex/com.android.runtime/lib/bionic/libc.so
+[+] linker_path is /apex/com.android.runtime/bin/linker
+[+] libdl_path is /apex/com.android.runtime/lib/bionic/libdl.so
+[+] system libs is OK
+[+] handle_selinux_init is OK
+[+] Start Inject
+[+] app_start_activity is com.xiaoyou.ToramOnline.aligames.ue/com.xiaoyougame.toramquick.SplashActivity
+[+] am start com.xiaoyou.ToramOnline.aligames.ue/com.xiaoyougame.toramquick.SplashActivity
+Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] cmp=com.xiaoyou.ToramOnline.aligames.ue/com.xiaoyougame.toramquick.SplashActivity }
+[+] pkg_name is com.xiaoyou.ToramOnline.aligames.ue
+[+] get_pid_by_name pid is 26584
+[+] lib_path is /data/local/tmp/libHook32.so
+[+] handle_parameter is OK
+[+] SELinux is Permissive or Disabled
+[+] attach porcess success, pid:26584
+[+] [get_remote_func_addr] lmod=0xE9568000, rmod=0xE8C64000, lfunc=0xE95D871D, rfunc=0xE8CD471D
+[+] mmap RemoteFuncAddr:0xe8cd471d
+[+] ptrace continue process success, pid:26584
+[+] ptrace call ret status is 2943
+[+] ptrace_call mmap success, return value=CC280000, pc=E8C64000
+[+] Remote Process Map Memory Addr:0xcc280000
+[+] linker_path value:/apex/com.android.runtime/bin/linker
+[+] [get_remote_func_addr] lmod=0xE96AB000, rmod=0xEB04C000, lfunc=0xE96AC849, rfunc=0xEB04D849
+[+] dlopen RemoteFuncAddr:0xeb04d849
+[+] [get_remote_func_addr] lmod=0xE96AB000, rmod=0xEB04C000, lfunc=0xE96AC85B, rfunc=0xEB04D85B
+[+] dlsym RemoteFuncAddr:0xeb04d85b
+[+] [get_remote_func_addr] lmod=0xE96AB000, rmod=0xEB04C000, lfunc=0xE96AC877, rfunc=0xEB04D877
+[+] dlclose RemoteFuncAddr:0xeb04d877
+[+] [get_remote_func_addr] lmod=0xE96AB000, rmod=0xEB04C000, lfunc=0xE96AC853, rfunc=0xEB04D853
+[+] dlerror RemoteFuncAddr:0xeb04d853
+[+] Get imports: dlopen: eb04d849, dlsym: eb04d85b, dlclose: eb04d877, dlerror: eb04d853
+[+] LibPath = /data/local/tmp/libHook32.so
+[+] ptrace continue process success, pid:26584
+[+] ptrace call ret status is 2943
+[+] ptrace_call dlopen success, Remote Process load module Addr:0x8130affb
+[+] No func !!
+[+] Recover Regs Success
+[+] detach process success, pid:26584
+[+] Finish Inject

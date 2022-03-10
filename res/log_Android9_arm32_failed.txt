@@ -1,0 +1,36 @@
+[+] libc_path is /system/lib/libc.so
+[+] linker_path is /system/bin/linker
+[+] libdl_path is /system/lib/libdl.so
+[+] system libs is OK
+[+] handle_selinux_init is OK
+[+] Start Inject
+[+] app_start_activity is com.xiaoyou.ToramOnline.aligames.uu/com.xiaoyougame.toramquick.SplashActivity
+[+] am start com.xiaoyou.ToramOnline.aligames.uu/com.xiaoyougame.toramquick.SplashActivity
+Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] cmp=com.xiaoyou.ToramOnline.aligames.uu/com.xiaoyougame.toramquick.SplashActivity }
+[+] pkg_name is com.xiaoyou.ToramOnline.aligames.uu
+[+] get_pid_by_name pid is 12621
+[+] lib_path is /data/local/tmp/lobHook32.so
+[+] handle_parameter is OK
+[+] SELinux is Permissive or Disabled
+[+] attach porcess success, pid:12621
+[+] [get_remote_func_addr] lmod=0xF25C7000, rmod=0xE6588000, lfunc=0xF25F0235, rfunc=0xE65B1235
+[+] mmap RemoteFuncAddr:0xe65b1235
+[+] ptrace continue process success, pid:12621
+[+] ptrace call ret status is 2943
+[+] ptrace_call mmap success, return value=0, pc=E6588024
+[+] Remote Process Map Memory Addr:0x0
+[+] linker_path value:/system/bin/linker
+[+] [get_remote_func_addr] lmod=0xF26F0000, rmod=0xE4ECD000, lfunc=0xF26F0D15, rfunc=0xE4ECDD15
+[+] dlopen RemoteFuncAddr:0xe4ecdd15
+[+] [get_remote_func_addr] lmod=0xF26F0000, rmod=0xE4ECD000, lfunc=0xF26F0D27, rfunc=0xE4ECDD27
+[+] dlsym RemoteFuncAddr:0xe4ecdd27
+[+] [get_remote_func_addr] lmod=0xF26F0000, rmod=0xE4ECD000, lfunc=0xF26F0D43, rfunc=0xE4ECDD43
+[+] dlclose RemoteFuncAddr:0xe4ecdd43
+[+] [get_remote_func_addr] lmod=0xF26F0000, rmod=0xE4ECD000, lfunc=0xF26F0D1F, rfunc=0xE4ECDD1F
+[+] dlerror RemoteFuncAddr:0xe4ecdd1f
+[+] Get imports: dlopen: e4ecdd15, dlsym: e4ecdd27, dlclose: e4ecdd43, dlerror: e4ecdd1f
+[+] LibPath = /data/local/tmp/lobHook32.so
+[-] Write Remote Memory error, MemoryAddr:0x0, err:I/O error
+[-] Write LibPath:/data/local/tmp/lobHook32.so to RemoteProcess error
+[+] detach process success, pid:12621
+[-] Inject Erro
