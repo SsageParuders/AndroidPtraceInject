@@ -210,12 +210,17 @@ void *get_dlopen_address(pid_t pid) {
     memset(sdk_ver, 0, sizeof(sdk_ver));
     __system_property_get("ro.build.version.sdk", sdk_ver);
 
-    printf("[+] linker_path value:%s\n",process_libs.linker_path);
-    if (atoi(sdk_ver) <= 23) { // 安卓7
+	printf("[+] linker_path value:%s\n",process_libs.linker_path);
+	#if defined(__i386__)
         dlopen_addr = get_remote_func_addr(pid, process_libs.linker_path, (void *) dlopen);
-    } else {
-        dlopen_addr = get_remote_func_addr(pid, process_libs.libdl_path, (void *) dlopen);
-    }
+    #else
+		if (atoi(sdk_ver) <= 23) { // 安卓7
+			dlopen_addr = get_remote_func_addr(pid, process_libs.linker_path, (void *) dlopen);
+		} else {
+			dlopen_addr = get_remote_func_addr(pid, process_libs.libdl_path, (void *) dlopen);
+		}
+    #endif
+
     printf("[+] dlopen RemoteFuncAddr:0x%lx\n", (uintptr_t) dlopen_addr);
     return dlopen_addr;
 }
@@ -231,11 +236,16 @@ void *get_dlclose_address(pid_t pid) {
     memset(sdk_ver, 0, sizeof(sdk_ver));
     __system_property_get("ro.build.version.sdk", sdk_ver);
 
-    if (atoi(sdk_ver) <= 23) {
-        dlclose_addr = get_remote_func_addr(pid, process_libs.linker_path, (void *) dlclose);
-    } else {
-        dlclose_addr = get_remote_func_addr(pid, process_libs.libdl_path, (void *) dlclose);
-    }
+	#if defined(__i386__)
+        dlclose_addr = get_remote_func_addr(pid, process_libs.linker_path, (void *) dlopen);
+    #else
+		if (atoi(sdk_ver) <= 23) {
+			dlclose_addr = get_remote_func_addr(pid, process_libs.linker_path, (void *) dlclose);
+		} else {
+			dlclose_addr = get_remote_func_addr(pid, process_libs.libdl_path, (void *) dlclose);
+		}
+    #endif
+
     printf("[+] dlclose RemoteFuncAddr:0x%lx\n", (uintptr_t) dlclose_addr);
     return dlclose_addr;
 }
@@ -251,11 +261,16 @@ void *get_dlsym_address(pid_t pid) {
     memset(sdk_ver, 0, sizeof(sdk_ver));
     __system_property_get("ro.build.version.sdk", sdk_ver);
 
-    if (atoi(sdk_ver) <= 23) {
-        dlsym_addr = get_remote_func_addr(pid, process_libs.linker_path, (void *) dlsym);
-    } else {
-        dlsym_addr = get_remote_func_addr(pid, process_libs.libdl_path, (void *) dlsym);
-    }
+	#if defined(__i386__)
+        dlsym_addr = get_remote_func_addr(pid, process_libs.linker_path, (void *) dlopen);
+    #else
+		if (atoi(sdk_ver) <= 23) {
+			dlsym_addr = get_remote_func_addr(pid, process_libs.linker_path, (void *) dlsym);
+		} else {
+			dlsym_addr = get_remote_func_addr(pid, process_libs.libdl_path, (void *) dlsym);
+		}
+    #endif
+	
     printf("[+] dlsym RemoteFuncAddr:0x%lx\n", (uintptr_t) dlsym_addr);
     return dlsym_addr;
 }
@@ -271,11 +286,16 @@ void *get_dlerror_address(pid_t pid) {
     memset(sdk_ver, 0, sizeof(sdk_ver));
     __system_property_get("ro.build.version.sdk", sdk_ver);
 
-    if (atoi(sdk_ver) <= 23) {
-        dlerror_addr = get_remote_func_addr(pid, process_libs.linker_path, (void *) dlerror);
-    } else {
-        dlerror_addr = get_remote_func_addr(pid, process_libs.libdl_path, (void *) dlerror);
-    }
+	#if defined(__i386__)
+        dlerror_addr = get_remote_func_addr(pid, process_libs.linker_path, (void *) dlopen);
+    #else
+		if (atoi(sdk_ver) <= 23) {
+			dlerror_addr = get_remote_func_addr(pid, process_libs.linker_path, (void *) dlerror);
+		} else {
+			dlerror_addr = get_remote_func_addr(pid, process_libs.libdl_path, (void *) dlerror);
+		}
+    #endif
+
     printf("[+] dlerror RemoteFuncAddr:0x%lx\n", (uintptr_t) dlerror_addr);
     return dlerror_addr;
 }
